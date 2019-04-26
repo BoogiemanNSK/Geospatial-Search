@@ -93,6 +93,9 @@ class Geospatial {
             System.out.println("%");
         }
         System.out.println();
+
+        Plotter plotter = new Plotter();
+        plotter.PlotStudentsStats(stats);
     }
 
     void SearchClosest(String name) {
@@ -110,7 +113,7 @@ class Geospatial {
         for (StudentStats stat : stats) {
             if (!stat.studentName.equals(name)) {
                 float dx = stat.avgGrade - originX;
-                float dy = (stat.attendancePercentage - originY) / 100.0f;
+                float dy = (stat.attendancePercentage - originY) / 10.0f;
                 float dist = dx * dx + dy * dy;
 
                 if (dist < closestValue) {
