@@ -3,7 +3,7 @@ import com.datastax.driver.core.*;
 
 class Geospatial {
 
-    private static final String KEYSPACE_NAME = "test";
+    private static final String KEYSPACE_NAME = "fingerprint_system";
 
     private StudentStats[] stats;
 
@@ -19,11 +19,14 @@ class Geospatial {
         List<Row> grades = session.execute("SELECT * FROM grades").all();
         List<Row> lectures = session.execute("SELECT * FROM lectures").all();
         List<Row> students = session.execute("SELECT * FROM students").all();
+        List<Row> student_course = session.execute("SELECT * FROM student_course").all();
+        List<Row> attendance = session.execute("SELECT * FROM attendance").all();
 
         stats = new StudentStats[students.size()];
         for (int i = 0; i < stats.length; i++) {
             stats[i] = new StudentStats();
-            stats[i].studentName = students.get(i).getString("name");
+            stats[i].studentName = students.get(i).getString("fname") + " "
+                    + students.get(i).getString("lname");
         }
 
         for (int i = 0; i < stats.length; i++) {
@@ -51,15 +54,13 @@ class Geospatial {
 
         for (int i = 0; i < stats.length; i++) {
             int fid = students.get(i).getInt("fid");
-            List<Row> student_course = session.execute("SELECT * FROM student_course WHERE fid=" + fid + " ALLOW FILTERING").all();
-            List<Row> attended_lectures = session.execute("SELECT * FROM attendance WHERE fid=" + fid + " ALLOW FILTERING").all();
             stats[i].attendancePercentage = 0.0f;
 
             int overall = 0;
             for (Row lecture : lectures) {
                 int lecture_course = lecture.getInt("cid");
                 for (Row row : student_course) {
-                    if (lecture_course == row.getInt("cid")) {
+                    if (fid == row.getInt("fid") && lecture_course == row.getInt("cid")) {
                         overall++;
                         break;
                     }
@@ -67,7 +68,8 @@ class Geospatial {
             }
 
             int attended = 0;
-            for (Row attended_lecture : attended_lectures) {
+            for (Row attended_lecture : attendance) {
+                if (fid != attended_lecture.getInt("fid")) { continue; }
                 int lecture_course = course_by_lecture[attended_lecture.getInt("lid")];
                 for (Row row : student_course) {
                     if (lecture_course == row.getInt("cid")) {
